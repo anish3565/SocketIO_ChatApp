@@ -3,56 +3,51 @@ from flask_socketio import SocketIO, emit
 import random
 
 app = Flask(__name__)
-socketio = SocketIO(app, async_mode="eventlet")
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Python dictionary storing the information of connected users
-## Key: socketid and value: avatarurl
-users={}
+# Dictionary storing connected users (Key: socketid, Value: avatar URL & username)
+users = {}
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# Listening for the connect event
+# When a new user connects
 @socketio.on("connect")
 def handle_connect():
-    username=f"User_{random.randint(1000,9999)}"
-    gender=random.choice(["girl", "boy"])
-    avatar_url=f"https://avatar.iran.liara.run/public/{gender}?username={username}"
+    username = f"User_{random.randint(1000,9999)}"
+    gender = random.choice(["girl", "boy"])
+    avatar_url = f"https://avatar.iran.liara.run/public/{gender}?username={username}"
 
-    # Updating users dictionary
-    users[request.sid]={"username": username, "avatar":avatar_url}
+    users[request.sid] = {"username": username, "avatar": avatar_url}
 
-    # Notify all users about the new user
     emit("user_joined", {"username": username, "avatar": avatar_url}, broadcast=True)
-
-    # Setting own username instead of random one
     emit("set_username", {"username": username})
 
-# Showing disconnectes users username
+# When a user disconnects
 @socketio.on("disconnect")
 def handle_disconnect():
-    # Removing the user from the users dictionary
-    user=users.pop(request.sid, None)
-
+    user = users.pop(request.sid, None)
     if user:
         emit("user_left", {"username": user["username"]}, broadcast=True)
 
+# Handle sending messages
 @socketio.on("send_message")
 def handle_send_message(data):
-    user=users.get(request.sid)
+    user = users.get(request.sid)
     if user:
-        emit("new_message",{
-                "username": user["username"],
-                "avatar": user["avatar"],
-                "message": data["message"]
-            }, broadcast=True)
+        emit("new_message", {
+            "username": user["username"],
+            "avatar": user["avatar"],
+            "message": data["message"]
+        }, broadcast=True)
 
+# Handle username updates
 @socketio.on("update_username")
 def handle_update_username(data):
-    old_username=users[request.sid]["username"]
-    new_username=data["new_username"]
-    users[request.sid]["username"]=new_username
+    old_username = users[request.sid]["username"]
+    new_username = data["new_username"]
+    users[request.sid]["username"] = new_username
 
     emit("username_updated", {
         "old_username": old_username,
@@ -60,4 +55,4 @@ def handle_update_username(data):
     }, broadcast=True)
 
 if __name__ == "__main__":
-    socketio.run(app)
+    socketio.run(app, debug=True, host="127.0.0.1", port=5000)
