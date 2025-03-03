@@ -22,7 +22,7 @@ def handle_connect():
     users[request.sid] = {"username": username, "avatar": avatar_url}
 
     emit("user_joined", {"username": username, "avatar": avatar_url}, broadcast=True)
-    emit("set_username", {"username": username})
+    emit("set_username", {"username": username, "avatar": avatar_url})
 
 # When a user disconnects
 @socketio.on("disconnect")
@@ -47,11 +47,19 @@ def handle_send_message(data):
 def handle_update_username(data):
     old_username = users[request.sid]["username"]
     new_username = data["new_username"]
+    gender = data["gender"]
+    
+    # Generate new avatar URL based on the selected gender
+    avatar_url = f"https://avatar.iran.liara.run/public/{gender}?username={new_username}"
+    
+    # Update both username and avatar
     users[request.sid]["username"] = new_username
+    users[request.sid]["avatar"] = avatar_url
 
     emit("username_updated", {
         "old_username": old_username,
-        "new_username": new_username
+        "new_username": new_username,
+        "avatar": avatar_url
     }, broadcast=True)
 
 if __name__ == "__main__":

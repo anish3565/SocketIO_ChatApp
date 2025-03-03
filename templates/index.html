@@ -33,12 +33,35 @@
             display: flex;
             flex-direction: column;
         }
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+            margin-bottom: 15px;
+        }
+        .sender-container {
+            align-self: flex-end;
+        }
+        .receiver-container {
+            align-self: flex-start;
+        }
+        .username-display {
+            font-size: 12px;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        .sender-container .username-display {
+            text-align: right;
+            color: #0056b3;
+        }
+        .receiver-container .username-display {
+            text-align: left;
+            color: #1a8731;
+        }
         .message {
             display: flex;
             align-items: center;
-            max-width: 80%;
-            margin-bottom: 10px;
-            padding: 8px;
+            padding: 4px;
             border-radius: 8px;
             transition: all 0.3s ease;
         }
@@ -52,7 +75,7 @@
         .message-bubble {
             padding: 12px;
             border-radius: 10px;
-            max-width: 70%;
+            max-width: 100%;
             word-wrap: break-word;
             font-size: 14px;
             line-height: 1.4;
@@ -60,7 +83,6 @@
         }
         .sender {
             justify-content: flex-end;
-            align-self: flex-end;
         }
         .sender .message-bubble {
             background-color: #007bff;
@@ -73,7 +95,6 @@
         }
         .receiver {
             justify-content: flex-start;
-            align-self: flex-start;
         }
         .receiver .message-bubble {
             background-color: #28a745;
@@ -177,6 +198,7 @@
             if (data.old_username === currentUsername) {
                 currentUsername = data.new_username;
                 currentAvatar = data.avatar;
+                document.title = `Chat - ${currentUsername}`;
             }
         });
 
@@ -208,21 +230,40 @@
         }
 
         function addMessage(username, message, avatar) {
+            // Create container for message and username
+            const messageContainer = document.createElement("div");
+            messageContainer.classList.add("message-container");
+            
+            // Set alignment based on if it's the current user
+            if (username === currentUsername) {
+                messageContainer.classList.add("sender-container");
+            } else {
+                messageContainer.classList.add("receiver-container");
+            }
+            
+            // Create username display element
+            const usernameElement = document.createElement("div");
+            usernameElement.classList.add("username-display");
+            usernameElement.textContent = username;
+            messageContainer.appendChild(usernameElement);
+            
+            // Create message element with bubble and avatar
             const messageElement = document.createElement("div");
             messageElement.classList.add("message");
-
+            
             if (username === currentUsername) {
                 messageElement.classList.add("sender");
             } else {
                 messageElement.classList.add("receiver");
             }
-
+            
             messageElement.innerHTML = `
                 <img src="${avatar}" alt="Avatar">
                 <div class="message-bubble">${message}</div>
             `;
-
-            chatMessages.appendChild(messageElement);
+            
+            messageContainer.appendChild(messageElement);
+            chatMessages.appendChild(messageContainer);
             chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
         }
 
